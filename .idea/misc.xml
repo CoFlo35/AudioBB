@@ -4,6 +4,8 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Users/Colin/AndroidStudioProjects/AudioBB/app/src/main/res/layout/activity_main.xml" value="0.25416666666666665" />
+        <entry key="..\:/Users/Colin/AndroidStudioProjects/AudioBB/app/src/main/res/layout/fragment_book_list.xml" value="0.16" />
+        <entry key="..\:/Users/Colin/AndroidStudioProjects/AudioBB/app/src/main/res/layout/recycler_item.xml" value="0.264" />
       </map>
     </option>
   </component>
