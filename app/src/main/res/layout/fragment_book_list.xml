@@ -9,9 +9,9 @@
       android:id="@+id/fragmentRecyclerView"
       android:layout_width="300dp"
       android:layout_height="500dp"
-      android:padding="4dp"
+      android:padding="8dp"
       android:scrollbars="vertical"
-      android:background="@color/grey"
+      android:background="@color/blue"
       android:layout_centerHorizontal="true"
       android:layout_centerVertical="true"/>
 
