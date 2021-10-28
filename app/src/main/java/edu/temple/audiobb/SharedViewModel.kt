@@ -5,7 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import java.io.Serializable
 
-class SharedViewModel: ViewModel(), Serializable {
+class SharedViewModel: ViewModel() {
+
+    //create storage of the values to be held in the ViewModel
     private val title : MutableLiveData<String> by lazy{
         MutableLiveData<String>()
     }
@@ -17,6 +19,7 @@ class SharedViewModel: ViewModel(), Serializable {
         MutableLiveData<Book>()
     }
 
+   // provide getter and setter functions
     fun setBook(_book:Book?){
         this.book.value = _book
     }
@@ -41,8 +44,4 @@ class SharedViewModel: ViewModel(), Serializable {
         return author
     }
 
-    fun clear(){
-        title.value = ""
-        author.value = ""
-    }
 }

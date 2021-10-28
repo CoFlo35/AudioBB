@@ -13,15 +13,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
-    private lateinit var recyclerView:RecyclerView
-    private lateinit var _layoutManager: RecyclerView.LayoutManager
+   //store the fragments and viewModel to be instantiated later
     private lateinit var fragment1:BookListFragment
     private lateinit var fragment2:BookDetailsFragment
-    //private var userPromptTextView:TextView = findViewById(R.id.textView)
+    private lateinit var viewModel:SharedViewModel
 
-    lateinit var viewModel:SharedViewModel
-
-
+    //initialize bool to test if there are multiple fragment containers
+    //if there are two then the device is in landscape
     var twopane = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,25 +28,30 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
 
         Log.d("Create", "Oncreate()")
 
+        //create a bookList to hold the book items
         var bookList:BookList = BookList(getData())
 
+        //test if there are 2 fragment containers
         twopane = findViewById<View>(R.id.fragmentContainerView2) != null
        // Log.d("tag", twopane.toString())
 
-
+        //create the fragments, make the BookList with a new instance which
+        //provides the BookList
         fragment1 = BookListFragment.newInstance(bookList)
         fragment2 = BookDetailsFragment()
 
+        // bind the viewModel to a ViewModelProvider and provide the scope
         viewModel = ViewModelProvider(this).get(SharedViewModel::class.java)
         //Log.d("listen", viewModel.getTitle().value.toString())
 
-        //twopane = findViewById<View>(R.id.fragmentContainerView2) != null
 
+        //open a fragment transaction, place BookList fragment in its container
         supportFragmentManager.beginTransaction()
             .add(R.id.fragmentContainerView, fragment1)
             .commit()
 
 
+        // if there are two fragment containers, fill the second with the BookDetails fragment
         if(twopane){
             if(supportFragmentManager.findFragmentById(R.id.fragmentContainerView2) == null){
                 supportFragmentManager.beginTransaction()
@@ -61,7 +64,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
     }
 
 
-
+    // when back button pressed, set the current ViewModel book to an empty one
+    // if the deivce is in landscape, replace the fragment container 2 with a
+    // new BookDetails fragment
     override fun onBackPressed() {
         viewModel.setBook(Book("",""))
         if(twopane){
@@ -69,6 +74,8 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
                 .replace(R.id.fragmentContainerView2, fragment2)
                 .addToBackStack(null)
                 .commit()
+            //if the device is in Portrait, replace the  BookDetails fragment with
+            // a BookList fragment
         }else{
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainerView, fragment1)
@@ -79,7 +86,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
     }
 
 
-
+    //supply the list of items
     private fun getData():MutableList<Book>{
         var items = mutableListOf<Book>()
         items.add(Book("Cat in the Hat", "Dr. Suess"))
@@ -96,6 +103,8 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
         return items
     }
 
+    //if a selection is made in portrait, swap the BookDetails and
+    // BookList fragments
     override fun selectionMade() {
         if(!twopane){
             supportFragmentManager.beginTransaction()

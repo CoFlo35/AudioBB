@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 
 lateinit var items:BookList
 class BookListFragment : Fragment() {
+    //create lateinit references to the views in the layout and the ViewModel
     private lateinit var layout:View
     private lateinit var recyclerView:RecyclerView
     private lateinit var viewModel:SharedViewModel
@@ -26,6 +27,9 @@ class BookListFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,savedInstanceState: Bundle?): View? {
 
+        //grab a reference to the layout
+        //get reference to the recyclerview
+        //set adapter and layout manager
         layout = inflater.inflate(R.layout.fragment_book_list, container, false)
         recyclerView = layout.findViewById(R.id.fragmentRecyclerView)
         recyclerView.adapter = BookListAdapter(items, onClickListener)
@@ -35,31 +39,28 @@ class BookListFragment : Fragment() {
     }
 
     val onClickListener = View.OnClickListener {
-
+        //grab the book that was clicked
         val itemPosition = recyclerView.getChildAdapterPosition(it)
         val book = items.get(itemPosition)
-        //val title = items.get(itemPosition).getTitle().toString()
-        //val author = items.get(itemPosition).getAuthor().toString()
-        Log.d("Fragment1", "${book.getTitle()}")
 
+        Log.d("Fragment1", "${book.getTitle()}")
+        //place book in viewModel
         viewModel.setBook(book)
-       // viewModel.setAuthor(author)
-        //viewModel.setTitle(title)
 
         (activity as EventInterface).selectionMade()
     }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        val book = viewModel.getBook()
-
-        Log.d("StateSave", "${book}")
-
-    }
+//
+//    override fun onSaveInstanceState(outState: Bundle) {
+//        super.onSaveInstanceState(outState)
+//        val book = viewModel.getBook()
+//
+//        Log.d("StateSave", "${book}")
+//
+//    }
 
     companion object {
 
-        @JvmStatic
+        //create a newInstance function to supply a BookList from MainActivity
         fun newInstance(_items:BookList) =
             BookListFragment().apply {
                 items = _items
