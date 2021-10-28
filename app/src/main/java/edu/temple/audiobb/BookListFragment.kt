@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,7 +19,9 @@ class BookListFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        activity.let{
+            viewModel = ViewModelProvider(it!!).get(SharedViewModel::class.java)
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,savedInstanceState: Bundle?): View? {
@@ -28,25 +31,30 @@ class BookListFragment : Fragment() {
         recyclerView.adapter = BookListAdapter(items, onClickListener)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        activity.let{
-            viewModel = ViewModelProvider(it!!).get(SharedViewModel::class.java)
-        }
-
-
         return layout
     }
 
     val onClickListener = View.OnClickListener {
 
         val itemPosition = recyclerView.getChildAdapterPosition(it)
-        val title = items.get(itemPosition).getTitle().toString()
-        val author = items.get(itemPosition).getAuthor().toString()
-        Log.d("Fragment1", "${title} & ${author}")
+        val book = items.get(itemPosition)
+        //val title = items.get(itemPosition).getTitle().toString()
+        //val author = items.get(itemPosition).getAuthor().toString()
+        Log.d("Fragment1", "${book.getTitle()}")
 
-        viewModel.setAuthor(author)
-        viewModel.setTitle(title)
-        BookDetailsFragment.updateDisplay()
-        //(activity as EventInterface).selectionMade(title,author)
+        viewModel.setBook(book)
+       // viewModel.setAuthor(author)
+        //viewModel.setTitle(title)
+
+        (activity as EventInterface).selectionMade()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        val book = viewModel.getBook()
+
+        Log.d("StateSave", "${book}")
+
     }
 
     companion object {
@@ -59,8 +67,12 @@ class BookListFragment : Fragment() {
 
     }
 
-    interface EventInterface{
 
+
+    interface EventInterface{
+        fun selectionMade()
     }
+
+
 }
 

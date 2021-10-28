@@ -14,36 +14,55 @@ lateinit var titleTextView:TextView
 lateinit var authorTextView: TextView
 lateinit var bySplitTextView:TextView
 lateinit var viewModel: SharedViewModel
+lateinit var book:Book
 
 class BookDetailsFragment : Fragment() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        activity.let{
+            viewModel = ViewModelProvider(it!!).get(SharedViewModel::class.java)
+        }
+
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,savedInstanceState: Bundle?
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
         layout = inflater.inflate(R.layout.fragment_book_details, container, false)
 
-        activity.let{
-            viewModel = ViewModelProvider(it!!).get(SharedViewModel::class.java)
-        }
 
         titleTextView = layout.findViewById(R.id.displayTitleName)
         authorTextView = layout.findViewById(R.id.displayAuthorName)
         bySplitTextView = layout.findViewById(R.id.displayBySplit)
 
+
+
         return layout
     }
 
-    companion object {
-        fun updateDisplay() {
-            titleTextView.text = viewModel.getTitle().value.toString()
-            authorTextView.text = viewModel.getAuthor().value.toString()
-            bySplitTextView.text = "By"
-            }
-        }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
+        ViewModelProvider(requireActivity())
+            .get(SharedViewModel::class.java)
+            .getBook()
+            .observe(requireActivity(), {
+                updateDisplay(it)
+            })
+
+
+    }
+    fun updateDisplay(_book: Book) {
+        book = _book
+        var title = book.getTitle()
+        titleTextView.text = title
+        authorTextView.text = book.getAuthor()
+        bySplitTextView.text = "By"
+    }
 }
+
+
+
