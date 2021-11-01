@@ -1,14 +1,7 @@
 package edu.temple.audiobb
 
-class Book (_title: String, _author:String){
-    private var title = _title
-    private var author = _author
+import java.io.Serializable
 
-    fun getTitle():String{
-        return title
-    }
-    fun getAuthor():String{
-        return author
-    }
+data class Book (val title: String, val author:String):Serializable{
 
 }

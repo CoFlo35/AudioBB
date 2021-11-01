@@ -61,9 +61,9 @@ class BookDetailsFragment : Fragment() {
     //create a function to update the BookDetails
     private fun updateDisplay(_book: Book) {
         book = _book
-        var title = book.getTitle()
+        var title = book.title
         titleTextView.text = title
-        authorTextView.text = book.getAuthor()
+        authorTextView.text = book.author
         bySplitTextView.text = "By"
     }
 }

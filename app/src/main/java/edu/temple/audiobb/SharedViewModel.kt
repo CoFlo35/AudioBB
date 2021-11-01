@@ -8,6 +8,7 @@ import java.io.Serializable
 class SharedViewModel: ViewModel() {
 
     //create storage of the values to be held in the ViewModel
+    /*
     private val title : MutableLiveData<String> by lazy{
         MutableLiveData<String>()
     }
@@ -15,8 +16,10 @@ class SharedViewModel: ViewModel() {
         MutableLiveData<String>()
     }
 
+     */
+
     private val book:MutableLiveData<Book> by lazy{
-        MutableLiveData<Book>()
+        MutableLiveData()
     }
 
    // provide getter and setter functions
@@ -27,6 +30,7 @@ class SharedViewModel: ViewModel() {
     fun getBook():LiveData<Book>{
         return book
     }
+    /*
 
     fun setTitle(_title:String){
         this.title.value = _title
@@ -43,5 +47,7 @@ class SharedViewModel: ViewModel() {
     fun getAuthor():LiveData<String>{
         return author
     }
+
+     */
 
 }

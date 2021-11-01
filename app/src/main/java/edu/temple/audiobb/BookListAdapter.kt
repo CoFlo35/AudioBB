@@ -10,7 +10,7 @@ import org.w3c.dom.Text
 class BookListAdapter(_items:BookList, _ocl:View.OnClickListener):RecyclerView.Adapter<BookListAdapter.ViewHolder>() {
 
     //store the parameters
-    private val items = _items
+    private val bookList = _items
     private val ocl = _ocl
 
     //create ViewHolder
@@ -18,6 +18,7 @@ class BookListAdapter(_items:BookList, _ocl:View.OnClickListener):RecyclerView.A
         val titleTextView:TextView = _view.findViewById(R.id.titleTextView)
         val authorTextView:TextView = _view.findViewById(R.id.authorTextView)
         val view =_view.apply{setOnClickListener(ocl)}
+        lateinit var book:Book
 
     }
     // inflate ViewHolder and create an instance
@@ -29,14 +30,17 @@ class BookListAdapter(_items:BookList, _ocl:View.OnClickListener):RecyclerView.A
 
         //Bind the Title and Author to their Respective TextViews
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        var book = items.get(position)
-        holder.titleTextView.text = book.getTitle()
-        holder.authorTextView.text = book.getAuthor()
+
+        var book = bookList[position]
+        holder.authorTextView.text = book.author
+        holder.titleTextView.text = book.title
+        //holder.titleTextView.text = book
+        //holder.authorTextView.text = book.getAuthor()
 
     }
 
     //return current size
     override fun getItemCount(): Int {
-        return items.size()
+        return bookList.size()
     }
 }

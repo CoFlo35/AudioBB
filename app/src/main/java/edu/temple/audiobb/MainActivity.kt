@@ -29,7 +29,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
         Log.d("Create", "Oncreate()")
 
         //create a bookList to hold the book items
-        var bookList:BookList = BookList(getData())
+        var bookList = getData()
 
         //test if there are 2 fragment containers
         twopane = findViewById<View>(R.id.fragmentContainerView2) != null
@@ -46,23 +46,40 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
 
 
         //open a fragment transaction, place BookList fragment in its container
-        supportFragmentManager.beginTransaction()
-            .add(R.id.fragmentContainerView, fragment1)
-            .commit()
+        if(savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .add(R.id.fragmentContainerView, fragment1)
+                .commit()
+        }else{
+            if (twopane && viewModel.getBook().value?.title != "") {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView,fragment1)
+                    .replace(R.id.fragmentContainerView2, BookDetailsFragment())
+                    .setReorderingAllowed(true)
+                    .addToBackStack(null)
+                    .commit()
+            }
+            if(!twopane && viewModel.getBook().value?.title != ""){
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView,fragment2)
+                    .commit()
+            }
+        }
 
 
         // if there are two fragment containers, fill the second with the BookDetails fragment
         if(twopane){
             if(supportFragmentManager.findFragmentById(R.id.fragmentContainerView2) == null){
                 supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView, fragment1)
                     .add(R.id.fragmentContainerView2,fragment2)
                     .commit()
             }
         }
 
 
-    }
 
+    }
 
     // when back button pressed, set the current ViewModel book to an empty one
     // if the deivce is in landscape, replace the fragment container 2 with a
@@ -72,6 +89,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
         if(twopane){
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainerView2, fragment2)
+                .replace(R.id.fragmentContainerView,fragment1)
                 .addToBackStack(null)
                 .commit()
             //if the device is in Portrait, replace the  BookDetails fragment with
@@ -83,12 +101,16 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
                 .commit()
         }
 
+
+
+
+
     }
 
 
     //supply the list of items
-    private fun getData():MutableList<Book>{
-        var items = mutableListOf<Book>()
+    private fun getData():BookList{
+        var items = BookList()
         items.add(Book("Cat in the Hat", "Dr. Suess"))
         items.add(Book("Corduroy", "Don Freeman"))
         items.add(Book("The Snow Day", "Erza Jack Keats"))

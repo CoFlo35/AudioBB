@@ -43,7 +43,7 @@ class BookListFragment : Fragment() {
         val itemPosition = recyclerView.getChildAdapterPosition(it)
         val book = items.get(itemPosition)
 
-        Log.d("Fragment1", "${book.getTitle()}")
+        Log.d("Fragment1", "${book.title}")
         //place book in viewModel
         viewModel.setBook(book)
 
