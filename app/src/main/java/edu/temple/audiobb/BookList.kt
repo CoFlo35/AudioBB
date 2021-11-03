@@ -19,4 +19,15 @@ class BookList : Serializable{
 
     fun size() = bookList.size
 
+    fun print():String{
+        var str = ""
+        if(bookList.size !=0) {
+            for (i in 0 until bookList.size) {
+                str = str + bookList[i].title + "\n"
+            }
+        }
+
+        return str
+    }
+
 }

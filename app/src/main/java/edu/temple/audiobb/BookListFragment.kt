@@ -49,14 +49,6 @@ class BookListFragment : Fragment() {
 
         (activity as EventInterface).selectionMade()
     }
-//
-//    override fun onSaveInstanceState(outState: Bundle) {
-//        super.onSaveInstanceState(outState)
-//        val book = viewModel.getBook()
-//
-//        Log.d("StateSave", "${book}")
-//
-//    }
 
     companion object {
 

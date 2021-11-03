@@ -11,9 +11,9 @@
         android:id="@+id/displayTitleName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="16dp"
         android:gravity="center"
-
+        android:text="Title"
         android:textColor="@color/black"
         android:textSize="27sp"
         android:textStyle="bold"
@@ -25,27 +25,25 @@
         android:id="@+id/displayAuthorName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="4dp"
         android:gravity="center"
-
+        android:text="Author"
         android:textColor="@color/black"
         android:textSize="27sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/displayBySplit" />
+        app:layout_constraintTop_toBottomOf="@+id/displayBookCover" />
 
-    <TextView
-        android:id="@+id/displayBySplit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-
-        android:textSize="23sp"
-        android:textStyle="bold"
+    <ImageView
+        android:id="@+id/displayBookCover"
+        android:layout_width="290dp"
+        android:layout_height="296dp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.495"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/displayTitleName" />
+        app:layout_constraintTop_toBottomOf="@+id/displayTitleName"
+        tools:src="@tools:sample/avatars" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

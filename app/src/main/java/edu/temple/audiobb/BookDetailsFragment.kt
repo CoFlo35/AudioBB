@@ -5,19 +5,21 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
 import org.w3c.dom.Text
-//store variables to hold the layout and the views on it
-lateinit var layout:View
-lateinit var titleTextView:TextView
-lateinit var authorTextView: TextView
-lateinit var bySplitTextView:TextView
-//reference the viewModel
-lateinit var viewModel: SharedViewModel
-lateinit var book:Book
+
 
 class BookDetailsFragment : Fragment() {
+    //store variables to hold the layout and the views on it
+    lateinit var layout:View
+    lateinit var titleTextView:TextView
+    lateinit var authorTextView: TextView
+    lateinit var coverImageView : ImageView
+    //reference the viewModel
+    lateinit var viewModel: SharedViewModel
+    lateinit var book:Book
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,10 +40,7 @@ class BookDetailsFragment : Fragment() {
         //bind the views
         titleTextView = layout.findViewById(R.id.displayTitleName)
         authorTextView = layout.findViewById(R.id.displayAuthorName)
-        bySplitTextView = layout.findViewById(R.id.displayBySplit)
-
-
-
+        coverImageView = layout.findViewById(R.id.displayBookCover)
         return layout
     }
 
@@ -61,10 +60,9 @@ class BookDetailsFragment : Fragment() {
     //create a function to update the BookDetails
     private fun updateDisplay(_book: Book) {
         book = _book
-        var title = book.title
-        titleTextView.text = title
+        titleTextView.text = book.title
         authorTextView.text = book.author
-        bySplitTextView.text = "By"
+        //coverImageView.setImageResource(book.coverURL)
     }
 }
 
