@@ -16,6 +16,7 @@
         android:background="@color/teal_200"
         android:padding="14dp"
         android:scrollbars="vertical"
+        android:gravity = "center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
