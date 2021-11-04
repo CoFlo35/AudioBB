@@ -25,6 +25,10 @@ class BookList : Serializable{
             for (i in 0 until bookList.size) {
                 str = str + bookList[i].title + "\n"
             }
+        }else{
+            if(bookList.size == 0){
+                str = "The bookList is empty"
+            }
         }
 
         return str

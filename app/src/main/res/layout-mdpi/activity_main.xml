@@ -11,9 +11,8 @@
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="550dp"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
         android:background="@color/teal_200"
         android:padding="14dp"
         android:scrollbars="vertical"

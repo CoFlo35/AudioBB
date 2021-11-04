@@ -4,9 +4,12 @@ import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.PersistableBundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.Adapter
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
@@ -17,8 +20,10 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.w3c.dom.Text
 
 //THIS IS THE WEB API BRANCH
 
@@ -27,22 +32,27 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
     private lateinit var fragment1:BookListFragment
     private lateinit var fragment2:BookDetailsFragment
     private lateinit var viewModel:SharedViewModel
-    val volleyQueue:RequestQueue by lazy { Volley.newRequestQueue(this) }
-    lateinit var bookList: BookList
+    private val volleyQueue:RequestQueue by lazy { Volley.newRequestQueue(this) }
+    private var bookList: BookList? = BookList()
+    lateinit var editText:EditText
+    private var instanceState: Bundle? = null
 
     //initialize bool to test if there are multiple fragment containers
     //if there are two then the device is in landscape
-    var twopane = false
+    private var twopane = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        Log.d("Create", "Oncreate()")
+        instanceState = savedInstanceState
 
-        //create a bookList to hold the book items
-        bookList = BookList()
-        getData()
+        Log.d("Create", "Oncreate()")
+        viewModel = ViewModelProvider(this).get(SharedViewModel::class.java)
+        //viewModel.setBookList(bookList)
+
+        getData("")
+
         //Log.d("Check","bookList Length: " + bookList.size().toString())
 
 
@@ -74,11 +84,10 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
 
     }
 
-    private fun getData(){
+    private fun getData(search:String){
         var returnList = BookList()
-        val url = "https://kamorris.com/lab/cis3515/search.php?term="
+        val url = "https://kamorris.com/lab/cis3515/search.php?term="+search
         //Log.d("test", url)
-
 
         volleyQueue.add (
             JsonArrayRequest(Request.Method.GET
@@ -87,23 +96,13 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
                 , {
                     Log.d("Response", it.toString())
                     try {
+                        addBooks(it)
                         //grab array of all POJO's
                         //for each element of array create a book
                         //add book to booklist
                             //var counter =
-                        Log.d("Check", "Returned Array: " +it.length().toString())
-                        for(i in 0 until it.length()+1){
-                            //Log.d("Check", counter.toString())
-                            var obj= it.getJSONObject(i)
-                            //counter = counter +1
-                            var book = Book(obj.getString("title"), obj.getString("author")
-                            ,obj.getInt("id"), obj.getString("cover_url"))
-                            //Log.d("Check", book.title)
-                            returnList.add(book)
-                            //Log.d("Check", book.title)
-                            onFinish(returnList)
+                        //Log.d("Check", "Returned Array: " +it.length().toString())
 
-                        }
                         //Log.d("Check", bookList.print())
 
 
@@ -121,26 +120,6 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
 
     }
 
-    /*
-    //supply the list of items
-    private fun getData():BookList{
-        var items = BookList()
-        items.add(Book("Cat in the Hat", "Dr. Suess"))
-        items.add(Book("Corduroy", "Don Freeman"))
-        items.add(Book("The Snow Day", "Erza Jack Keats"))
-        items.add(Book("The Giving Tree", "Shel Siverstein"))
-        items.add(Book("The Lorax", "Dr.Suess"))
-        items.add(Book("Olivia", "Ian Falconer"))
-        items.add(Book("Winnie-the-Pooh", "Ernest H. Shepard"))
-        items.add(Book("The Tale of Peter"+'\n'+" Rabbit", "Beatrix Potter"))
-        items.add(Book("Go Dog Go!", "P. D. Eastman"))
-        items.add(Book("Coraline", "Niel Gaiman"))
-        items.add(Book("Charlie Brown", "Charles M. Schulz"))
-        return items
-    }
-
-     */
-
     //if a selection is made in portrait, swap the BookDetails and
     // BookList fragments
     override fun selectionMade() {
@@ -152,10 +131,14 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
         }
     }
 
-    fun onFinish(returnList: BookList){
-        bookList = returnList
-        Log.d("Check", bookList.print())
+    fun onFinish(){
+       // Log.d("Check", "\n"+ bookList!!.print())
 
+
+    }
+
+
+    fun createLayout(_bookList: BookList?){
         //test if there are 2 fragment containers
         twopane = findViewById<View>(R.id.fragmentContainerView2) != null
         // Log.d("tag", twopane.toString())
@@ -165,21 +148,16 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
         //var testList = BookList()
         //testList.add(bookList[1])
         //Log.d("MyData", testList.print())
-        fragment1 = BookListFragment.newInstance(bookList)
+        fragment1 = BookListFragment.newInstance(bookList!!)
         fragment2 = BookDetailsFragment()
 
         // bind the viewModel to a ViewModelProvider and provide the scope
-        viewModel = ViewModelProvider(this).get(SharedViewModel::class.java)
+
         //Log.d("listen", viewModel.getTitle().value.toString())
 
-        supportFragmentManager.beginTransaction()
-            .add(R.id.fragmentContainerView, fragment1)
-            .commit()
-
-
         //open a fragment transaction, place BookList fragment in its container
-        /*
-        if(savedInstanceState == null) {
+
+        if(instanceState == null) {
             supportFragmentManager.beginTransaction()
                 .add(R.id.fragmentContainerView, fragment1)
                 .commit()
@@ -199,9 +177,6 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
             }
         }
 
-         */
-
-
         // if there are two fragment containers, fill the second with the BookDetails fragment
         if(twopane){
             if(supportFragmentManager.findFragmentById(R.id.fragmentContainerView2) == null){
@@ -211,8 +186,24 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
                     .commit()
             }
         }
+    }
 
+    fun booksAdded(){
+        var bookList = viewModel.getBookList().value
+        createLayout(bookList)
+    }
 
+    fun addBooks(jsonArr:JSONArray){
+        for(i in 0 until jsonArr.length()+1){
+            //Log.d("Check", counter.toString())
+            var obj= jsonArr.getJSONObject(i)
+            //counter = counter +1
+            var book = Book(obj.getString("title"), obj.getString("author")
+                ,obj.getInt("id"), obj.getString("cover_url"))
+            bookList?.add(book)
+            viewModel.setBookList(bookList)
+            booksAdded()
+        }
     }
 
 

@@ -1,6 +1,10 @@
 package edu.temple.audiobb
 
+import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +12,9 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
+import com.squareup.picasso.Picasso
+import org.json.JSONException
+import org.w3c.dom.DOMErrorHandler
 import org.w3c.dom.Text
 
 
@@ -20,6 +27,8 @@ class BookDetailsFragment : Fragment() {
     //reference the viewModel
     lateinit var viewModel: SharedViewModel
     lateinit var book:Book
+    lateinit var handler: Handler
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,8 +71,11 @@ class BookDetailsFragment : Fragment() {
         book = _book
         titleTextView.text = book.title
         authorTextView.text = book.author
-        //coverImageView.setImageResource(book.coverURL)
+            if(book.coverURL != null && book.coverURL != "") {
+                Picasso.get().load(book.coverURL).into(coverImageView)
+            }
     }
+
 }
 
 

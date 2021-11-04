@@ -17,6 +17,9 @@ class SharedViewModel: ViewModel() {
     }
 
      */
+    private val bookList:MutableLiveData<BookList> by lazy{
+        MutableLiveData()
+    }
 
     private val book:MutableLiveData<Book> by lazy{
         MutableLiveData()
@@ -29,6 +32,14 @@ class SharedViewModel: ViewModel() {
 
     fun getBook():LiveData<Book>{
         return book
+    }
+
+    fun getBookList():LiveData<BookList>{
+        return bookList
+    }
+
+    fun setBookList(bookList: BookList?){
+        this.bookList.value = bookList
     }
     /*
 
