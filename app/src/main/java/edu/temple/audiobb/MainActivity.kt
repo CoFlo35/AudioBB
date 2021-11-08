@@ -1,5 +1,7 @@
 package edu.temple.audiobb
 
+import android.app.Dialog
+import android.content.Intent
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -8,10 +10,8 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
-import android.widget.Adapter
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.view.Window
+import android.widget.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,7 +27,7 @@ import org.w3c.dom.Text
 
 //THIS IS THE WEB API BRANCH
 
-class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
+class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookSearch.BookSeachListener {
    //store the fragments and viewModel to be instantiated later
     private lateinit var fragment1:BookListFragment
     private lateinit var fragment2:BookDetailsFragment
@@ -36,6 +36,8 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
     private var bookList: BookList? = BookList()
     lateinit var editText:EditText
     private var instanceState: Bundle? = null
+    private lateinit var searchButton:Button
+    private var term:String = ""
 
     //initialize bool to test if there are multiple fragment containers
     //if there are two then the device is in landscape
@@ -46,12 +48,36 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
         setContentView(R.layout.activity_main)
 
         instanceState = savedInstanceState
+        searchButton = findViewById(R.id.searchButton)
+        searchButton.setOnClickListener(){
+            /*var intent = Intent(this, BookSearchActivity::class.java)
+            startActivity(intent)
+
+             */
+            Log.d("button", "Search Clicked")
+            /*
+            var dialog:Dialog = Dialog(this)
+           // dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+            dialog.setContentView(R.layout.activity_book_search)
+            dialog.show()
+
+             */
+
+            var bookSearch: BookSearch = BookSearch()
+            bookSearch.show(supportFragmentManager, "bookSearchDialog")
+            if(term != null){
+                Log.d("SearchTerm", "Search For Books With: "+term)
+            }
+
+        }
 
         Log.d("Create", "Oncreate()")
         viewModel = ViewModelProvider(this).get(SharedViewModel::class.java)
         //viewModel.setBookList(bookList)
 
-        getData("")
+
+        getData(term)
+
 
         //Log.d("Check","bookList Length: " + bookList.size().toString())
 
@@ -96,6 +122,10 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
                 , {
                     Log.d("Response", it.toString())
                     try {
+
+                        if(bookList!!.size() != null || bookList!!.size() != 0){
+                            bookList = BookList()
+                        }
                         addBooks(it)
                         //grab array of all POJO's
                         //for each element of array create a book
@@ -129,12 +159,6 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
                 .addToBackStack(null)
                 .commit()
         }
-    }
-
-    fun onFinish(){
-       // Log.d("Check", "\n"+ bookList!!.print())
-
-
     }
 
 
@@ -188,12 +212,15 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
         }
     }
 
+
+
     fun booksAdded(){
         var bookList = viewModel.getBookList().value
         createLayout(bookList)
     }
 
     fun addBooks(jsonArr:JSONArray){
+
         for(i in 0 until jsonArr.length()+1){
             //Log.d("Check", counter.toString())
             var obj= jsonArr.getJSONObject(i)
@@ -205,6 +232,15 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface {
             booksAdded()
         }
     }
+
+    override fun applySearch(searchTerm: String) {
+        term = searchTerm
+        getData(term)
+        Log.d("retrieveTerm", term)
+
+    }
+
+
 
 
 }

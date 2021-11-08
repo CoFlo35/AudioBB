@@ -11,13 +11,14 @@
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView"
         android:layout_width="325dp"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:layout_marginEnd="5dp"
         android:background="@color/teal_200"
         android:padding="14dp"
         android:scrollbars="vertical"
+        app:layout_constraintHeight_percent=".8"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.002"
@@ -27,15 +28,35 @@
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView2"
         android:layout_width="325dp"
-        android:layout_height="match_parent"
-        android:foregroundGravity="center"
+        android:layout_height="0dp"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:layout_marginStart="5dp"
         android:background="@color/teal_200"
+        android:foregroundGravity="center"
         android:padding="3dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent=".8"
+        app:layout_constraintHorizontal_bias="0.96"
         app:layout_constraintStart_toEndOf="@+id/fragmentContainerView"
         tools:layout="@layout/fragment_book_details" />
+
+    <Button
+        android:id="@+id/searchButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:backgroundTint="@color/white"
+        android:gravity="center"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:text="search"
+        android:textColor="@color/grey"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/fragmentContainerView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

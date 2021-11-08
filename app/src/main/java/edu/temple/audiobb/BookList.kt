@@ -34,4 +34,16 @@ class BookList : Serializable{
         return str
     }
 
+    fun contains(book:Book):Boolean{
+        var contains = false;
+        if(bookList.size != 0){
+            for (i in 0 until bookList.size) {
+                if(book == bookList[i]){
+                    contains = true
+                }
+            }
+        }
+        return contains
+    }
+
 }
