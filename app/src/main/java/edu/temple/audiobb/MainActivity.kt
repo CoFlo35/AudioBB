@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     private var instanceState: Bundle? = null
     private lateinit var searchButton:Button
     private var term:String = ""
+    private lateinit var storeBookList: BookList
 
     //initialize bool to test if there are multiple fragment containers
     //if there are two then the device is in landscape
@@ -46,35 +47,47 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        twopane = findViewById<View>(R.id.fragmentContainerView2) != null
         instanceState = savedInstanceState
         searchButton = findViewById(R.id.searchButton)
+        viewModel = ViewModelProvider(this!!).get(SharedViewModel::class.java)
+
         searchButton.setOnClickListener(){
-            /*var intent = Intent(this, BookSearchActivity::class.java)
-            startActivity(intent)
-
-             */
-            Log.d("button", "Search Clicked")
-            /*
-            var dialog:Dialog = Dialog(this)
-           // dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-            dialog.setContentView(R.layout.activity_book_search)
-            dialog.show()
-
-             */
 
             var bookSearch: BookSearch = BookSearch()
             bookSearch.show(supportFragmentManager, "bookSearchDialog")
-            if(term != null){
-                Log.d("SearchTerm", "Search For Books With: "+term)
-            }
+
 
         }
-
         Log.d("Create", "Oncreate()")
-        viewModel = ViewModelProvider(this).get(SharedViewModel::class.java)
+
+
         //viewModel.setBookList(bookList)
 
+        if(savedInstanceState != null){
+            with(savedInstanceState) {
+
+                term = savedInstanceState.getString("term").toString()
+                bookList = getSerializable("bookList") as BookList
+                Log.d("InstanceCheck", bookList!!.print())
+                //Log.d("InstanceString", term.toString())
+                fragment1 = BookListFragment.newInstance(bookList!!)
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView,fragment1)
+                    .commit()
+            }
+           // bookList = savedInstanceState.getSerializable("bookList") as BookList?
+            //bookList = savedInstanceState.getSerializable("bookList") as BookList
+
+
+
+            /*fragment1 = BookListFragment.newInstance(bookList!!)
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainerView, fragment1)
+                .commit()
+
+             */
+        }
 
         getData(term)
 
@@ -89,22 +102,28 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     // new BookDetails fragment
     override fun onBackPressed() {
         viewModel.setBook(Book("","",0,""))
+        fragment1 = BookListFragment.newInstance(viewModel.getBookList().value!!)
+        fragment2 = BookDetailsFragment()
         if(twopane){
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainerView2, fragment2)
-                .replace(R.id.fragmentContainerView,fragment1)
+                //.replace(R.id.fragmentContainerView,fragment1)
                 .addToBackStack(null)
                 .commit()
             //if the device is in Portrait, replace the  BookDetails fragment with
             // a BookList fragment
-        }else{
+
+        }
+        else{
+            //getData(term)
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainerView, fragment1)
-                .addToBackStack(null)
+               .addToBackStack(null)
                 .commit()
+            getData(term)
+
+
         }
-
-
 
 
 
@@ -127,6 +146,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
                             bookList = BookList()
                         }
                         addBooks(it)
+
                         //grab array of all POJO's
                         //for each element of array create a book
                         //add book to booklist
@@ -153,27 +173,46 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     //if a selection is made in portrait, swap the BookDetails and
     // BookList fragments
     override fun selectionMade() {
+        fragment2 = BookDetailsFragment()
         if(!twopane){
+            //getData(term)
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainerView, fragment2)
                 .addToBackStack(null)
                 .commit()
+        }else{
+            getData(term)
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainerView2, fragment2)
+                .addToBackStack(null)
+                .commit()
+
         }
     }
 
 
     fun createLayout(_bookList: BookList?){
         //test if there are 2 fragment containers
+        Log.d("isLand", "Has two Panels: " + twopane.toString())
         twopane = findViewById<View>(R.id.fragmentContainerView2) != null
         // Log.d("tag", twopane.toString())
+        storeBookList = _bookList!!
 
         //create the fragments, make the BookList with a new instance which
         //provides the BookList
         //var testList = BookList()
         //testList.add(bookList[1])
         //Log.d("MyData", testList.print())
-        fragment1 = BookListFragment.newInstance(bookList!!)
+        bookList = _bookList
+        var fragmentList = BookListFragment.newInstance(_bookList!!)
         fragment2 = BookDetailsFragment()
+
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainerView, fragmentList)
+            .commit()
+
+
 
         // bind the viewModel to a ViewModelProvider and provide the scope
 
@@ -182,41 +221,52 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         //open a fragment transaction, place BookList fragment in its container
 
         if(instanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .add(R.id.fragmentContainerView, fragment1)
-                .commit()
-        }else{
+
+//            supportFragmentManager.beginTransaction()
+//                .add(R.id.fragmentContainerView, fragmentList)
+//                .commit()
+        }
             if (twopane && viewModel.getBook().value?.title != "") {
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainerView,fragment1)
-                    .replace(R.id.fragmentContainerView2, BookDetailsFragment())
+                    .add(R.id.fragmentContainerView2, BookDetailsFragment())
+                    .replace(R.id.fragmentContainerView, fragmentList)
                     .setReorderingAllowed(true)
                     .addToBackStack(null)
                     .commit()
+                Log.d("fillContainer", "Config Change Line 220 did this")
             }
+            /*
             if(!twopane && viewModel.getBook().value?.title != ""){
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainerView,fragment2)
+                    .replace(R.id.fragmentContainerView,BookDetailsFragment())
                     .commit()
             }
-        }
+
+             */
+
 
         // if there are two fragment containers, fill the second with the BookDetails fragment
         if(twopane){
             if(supportFragmentManager.findFragmentById(R.id.fragmentContainerView2) == null){
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainerView, fragment1)
-                    .add(R.id.fragmentContainerView2,fragment2)
+                    .replace(R.id.fragmentContainerView, fragmentList)
+                    .add(R.id.fragmentContainerView2,BookDetailsFragment())
                     .commit()
+                    Log.d("fillContainer", "Config Change Line 217 did this")
             }
+
         }
+
+
     }
 
 
 
     fun booksAdded(){
         var bookList = viewModel.getBookList().value
+        Log.d("trackBooks", bookList!!.print())
         createLayout(bookList)
+
     }
 
     fun addBooks(jsonArr:JSONArray){
@@ -231,16 +281,22 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
             viewModel.setBookList(bookList)
             booksAdded()
         }
+
     }
 
     override fun applySearch(searchTerm: String) {
         term = searchTerm
         getData(term)
-        Log.d("retrieveTerm", term)
+        Log.d("retrieveTerm", "Searched Term is: "+term)
 
     }
 
-
-
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState?.run{
+            putString("term", term)
+            putSerializable("bookList", storeBookList)
+        }
+        super.onSaveInstanceState(outState)
+    }
 
 }
