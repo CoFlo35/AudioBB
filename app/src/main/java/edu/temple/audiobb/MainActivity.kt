@@ -28,7 +28,7 @@ import org.w3c.dom.Text
 //THIS IS THE WEB API BRANCH
 
 class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookSearch.BookSeachListener {
-   //store the fragments and viewModel to be instantiated later
+    //initialize references to all views and objects
     private lateinit var fragment1:BookListFragment
     private lateinit var fragment2:BookDetailsFragment
     private lateinit var viewModel:SharedViewModel
@@ -52,6 +52,8 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         searchButton = findViewById(R.id.searchButton)
         viewModel = ViewModelProvider(this!!).get(SharedViewModel::class.java)
 
+        supportActionBar?.title = "Book Search Database"
+
         searchButton.setOnClickListener(){
 
             var bookSearch: BookSearch = BookSearch()
@@ -59,41 +61,25 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
 
         }
-        Log.d("Create", "Oncreate()")
 
-
-        //viewModel.setBookList(bookList)
-
+        //check if the provided bundle on OnCreate has stored values
         if(savedInstanceState != null){
             with(savedInstanceState) {
 
+                //grab the term and bookList from the bundle
                 term = savedInstanceState.getString("term").toString()
                 bookList = getSerializable("bookList") as BookList
-                Log.d("InstanceCheck", bookList!!.print())
-                //Log.d("InstanceString", term.toString())
+
+                //create the BookList fragment with the same bookList that was stored from previous
+                //lifecycle, add it to its designated container
                 fragment1 = BookListFragment.newInstance(bookList!!)
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.fragmentContainerView,fragment1)
                     .commit()
             }
-           // bookList = savedInstanceState.getSerializable("bookList") as BookList?
-            //bookList = savedInstanceState.getSerializable("bookList") as BookList
-
-
-
-            /*fragment1 = BookListFragment.newInstance(bookList!!)
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerView, fragment1)
-                .commit()
-
-             */
         }
 
         getData(term)
-
-
-        //Log.d("Check","bookList Length: " + bookList.size().toString())
-
 
     }
 
@@ -110,12 +96,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
                 //.replace(R.id.fragmentContainerView,fragment1)
                 .addToBackStack(null)
                 .commit()
-            //if the device is in Portrait, replace the  BookDetails fragment with
-            // a BookList fragment
-
         }
         else{
-            //getData(term)
+
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainerView, fragment1)
                .addToBackStack(null)
@@ -128,7 +111,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
 
     }
-
+    // this function makes a GET request to retrieve a JSON Array of JSON Objects from the
+    // designated URL, we will call this again if the search term is changed to update
+    // the BookList
     private fun getData(search:String){
         var returnList = BookList()
         val url = "https://kamorris.com/lab/cis3515/search.php?term="+search
@@ -142,20 +127,13 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
                     Log.d("Response", it.toString())
                     try {
 
+                        //check if the BookList has books, if it does make the bookList reference
+                        // a new BookList as to keep from adding all new search matches to the end
+                        // of the previous list
                         if(bookList!!.size() != null || bookList!!.size() != 0){
                             bookList = BookList()
                         }
                         addBooks(it)
-
-                        //grab array of all POJO's
-                        //for each element of array create a book
-                        //add book to booklist
-                            //var counter =
-                        //Log.d("Check", "Returned Array: " +it.length().toString())
-
-                        //Log.d("Check", bookList.print())
-
-
                     } catch (e : JSONException) {
                         e.printStackTrace()
                     }
@@ -170,10 +148,11 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     }
 
-    //if a selection is made in portrait, swap the BookDetails and
-    // BookList fragments
+    //Function called when user selects a book from the BookListFragment recyclerview
     override fun selectionMade() {
         fragment2 = BookDetailsFragment()
+        //if a selection is made in portrait, swap the BookDetails and
+        // BookList fragments
         if(!twopane){
             //getData(term)
             supportFragmentManager.beginTransaction()
@@ -181,6 +160,8 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
                 .addToBackStack(null)
                 .commit()
         }else{
+            //if a selection is made in landscape, replace the BookDetailsFragment with a new
+            // and updated BookDetailsFragment
             getData(term)
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainerView2, fragment2)
@@ -191,41 +172,25 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     }
 
 
+    //This helper method will sort and display the fragments in their desginated containers
+    //based on the oreintation of the device
     fun createLayout(_bookList: BookList?){
-        //test if there are 2 fragment containers
-        Log.d("isLand", "Has two Panels: " + twopane.toString())
-        twopane = findViewById<View>(R.id.fragmentContainerView2) != null
-        // Log.d("tag", twopane.toString())
+
         storeBookList = _bookList!!
 
         //create the fragments, make the BookList with a new instance which
         //provides the BookList
-        //var testList = BookList()
-        //testList.add(bookList[1])
-        //Log.d("MyData", testList.print())
         bookList = _bookList
         var fragmentList = BookListFragment.newInstance(_bookList!!)
         fragment2 = BookDetailsFragment()
 
-
+        //always replace the list fragment with a new list fragment
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainerView, fragmentList)
             .commit()
 
-
-
-        // bind the viewModel to a ViewModelProvider and provide the scope
-
-        //Log.d("listen", viewModel.getTitle().value.toString())
-
-        //open a fragment transaction, place BookList fragment in its container
-
-        if(instanceState == null) {
-
-//            supportFragmentManager.beginTransaction()
-//                .add(R.id.fragmentContainerView, fragmentList)
-//                .commit()
-        }
+        //If there are two fragment containers and there is a book chosen, display the selected
+        //book in the second container on the layout
             if (twopane && viewModel.getBook().value?.title != "") {
                 supportFragmentManager.beginTransaction()
                     .add(R.id.fragmentContainerView2, BookDetailsFragment())
@@ -235,17 +200,17 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
                     .commit()
                 Log.d("fillContainer", "Config Change Line 220 did this")
             }
-            /*
-            if(!twopane && viewModel.getBook().value?.title != ""){
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainerView,BookDetailsFragment())
-                    .commit()
-            }
+        //if a book is selected and device is in portrait, replace the BookListFragment with a
+        //BookDetails fragment until the user clicks the back button to make a new selection
+        if(!twopane && viewModel.getBook().value?.title != null && viewModel.getBook().value?.title != ""){
+            Log.d("checkViewModel", "Book Name is: " + viewModel.getBook().value?.title)
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainerView, BookDetailsFragment())
+                .commit()
+        }
 
-             */
-
-
-        // if there are two fragment containers, fill the second with the BookDetails fragment
+        // if there are two fragment containers and the second container is empty
+        // add a BookDetailsFragment to hold its own place
         if(twopane){
             if(supportFragmentManager.findFragmentById(R.id.fragmentContainerView2) == null){
                 supportFragmentManager.beginTransaction()
@@ -254,14 +219,11 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
                     .commit()
                     Log.d("fillContainer", "Config Change Line 217 did this")
             }
-
         }
-
-
     }
 
-
-
+    //callback funtion for when the books are added, after retrieving the BookList from the
+    //ViewModel, call the helper function to manage the fragments on the layout
     fun booksAdded(){
         var bookList = viewModel.getBookList().value
         Log.d("trackBooks", bookList!!.print())
@@ -269,6 +231,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     }
 
+    //take an Array of JSON objects and convert them all to book objects
+    //add all book objects to the new empty BookList and add the BookList to the
+    //ViewModel
     fun addBooks(jsonArr:JSONArray){
 
         for(i in 0 until jsonArr.length()+1){
@@ -284,6 +249,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     }
 
+    //when a term is searched from the BookSearch Dialog, get the term
+    //and queue a search for the new list of books that matches
+    //the term
     override fun applySearch(searchTerm: String) {
         term = searchTerm
         getData(term)
@@ -291,6 +259,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     }
 
+    // save the term and the current BookList to be reused on Config changes
     override fun onSaveInstanceState(outState: Bundle) {
         outState?.run{
             putString("term", term)

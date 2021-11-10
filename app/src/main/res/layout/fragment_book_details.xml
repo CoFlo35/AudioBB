@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center"
+    android:layout_centerVertical="true"
     tools:context=".BookDetailsFragment">
 
     <TextView
@@ -12,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Title"
+
         android:layout_marginTop="10dp"
         android:layout_marginBottom="5dp"
         android:textColor="@color/black"
@@ -28,7 +29,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
         android:gravity="center"
-        android:text="Author"
+
         android:textColor="@color/black"
         android:textSize="27sp"
         android:textStyle="bold"
@@ -41,7 +42,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="7dp"
-        app:layout_constraintHeight_percent=".65"
+        app:layout_constraintHeight_percent=".50"
         app:layout_constraintWidth_percent=".95"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.495"
