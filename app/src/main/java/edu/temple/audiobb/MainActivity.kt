@@ -1,29 +1,25 @@
 package edu.temple.audiobb
 
-import android.app.Dialog
+
+import android.content.ComponentName
 import android.content.Intent
-import android.content.res.Configuration
+import android.content.ServiceConnection
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.PersistableBundle
-import android.text.Editable
-import android.text.TextWatcher
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import android.view.View
-import android.view.Window
 import android.widget.*
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
-import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import edu.temple.audlibplayer.PlayerService
 import org.json.JSONArray
 import org.json.JSONException
-import org.json.JSONObject
-import org.w3c.dom.Text
 
 //THIS IS THE WEB API BRANCH
 
@@ -39,6 +35,38 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     private lateinit var searchButton:Button
     private var term:String = ""
     private lateinit var storeBookList: BookList
+//    private lateinit var playButton:ImageButton
+//    private lateinit var pauseButton:ImageButton
+//    private lateinit var stopButton:ImageButton
+//    private lateinit var progressBar: SeekBar
+    private lateinit var controlFragment:PlayerServiceFragment
+
+    var pauseUnpause = 0
+
+    private lateinit var playerBinder: PlayerService.MediaControlBinder
+    private lateinit var playerIBinder:PlayerService.MediaControlBinder
+    var isConnected = false
+    var elapsedTime = 0
+    private var book:Book? = null
+
+    var playerHandler = Handler(Looper.getMainLooper()){
+        it.what
+       true
+    }
+
+    val serviceConnection = object:ServiceConnection{
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            isConnected = true
+            Log.d("inspect", service.toString())
+            playerBinder = service as PlayerService.MediaControlBinder
+            playerBinder.setProgressHandler(playerHandler)
+        }
+
+        override fun onServiceDisconnected(p0: ComponentName?) {
+            isConnected = false
+        }
+
+    }
 
     //initialize bool to test if there are multiple fragment containers
     //if there are two then the device is in landscape
@@ -50,17 +78,111 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         twopane = findViewById<View>(R.id.fragmentContainerView2) != null
         instanceState = savedInstanceState
         searchButton = findViewById(R.id.searchButton)
+        //playButton = findViewById(R.id.startButton)
+        //pauseButton = findViewById(R.id.pauseButton)
+        //stopButton = findViewById(R.id.stopButton)
+        //progressBar = findViewById(R.id.progressBar)
+
+        bindService(Intent(this,PlayerService::class.java)
+            ,serviceConnection
+            , BIND_AUTO_CREATE)
+
+//          progressBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+//              override fun onProgressChanged(name: SeekBar?, positon: Int, p2: Boolean) {
+//                  var book = viewModel.getBook().value
+//                  if(book?.title != "" && book?.title != null) {
+//
+//                      var dur = book?.duration
+//
+//                      var percent = progressBar.progress.toFloat().div(100)
+//                      Log.d("progress", percent.toString())
+//                      playerBinder.seekTo(dur?.toFloat()?.times(percent)!!.toInt())
+//                  }
+//
+//              }
+//
+//              override fun onStartTrackingTouch(p0: SeekBar?) {
+//                  //do nothing
+//              }
+//
+//              override fun onStopTrackingTouch(p0: SeekBar?) {
+//                  //do nothing
+//              }
+//          })
+//
+
+
         viewModel = ViewModelProvider(this!!).get(SharedViewModel::class.java)
 
         supportActionBar?.title = "Book Search Database"
+
+        fun POC_Calback(){
+            //progressBar.progress = 0
+            if (isConnected) {
+                var book = viewModel.getBook().value
+                if (book?.title != "" && book?.title != null) {
+                    playerBinder.play(book!!.id)
+                    Log.d("playButton", "Playing Book # ${book.id}")
+                    Log.d("playBook", "Book Title: ${book.title}")
+                    //playButton.visibility = View.GONE
+                    playerBinder.setProgressHandler(playerHandler)
+
+                }
+            }
+        }
+
+//            }else{
+//                Log.d("playButton", "Disconnected")
+//            }
+//
+//
+//
+//        }
+//
+//        stopButton.setOnClickListener(){
+//            unbindService(serviceConnection)
+//            elapsedTime = 0
+//            playButton.visibility = View.VISIBLE
+//            bindService(Intent(this,PlayerService::class.java)
+//                ,serviceConnection
+//                , BIND_AUTO_CREATE)
+//            pauseUnpause = 0
+//            pauseButton.setImageResource(R.drawable.ic_pause)
+//            progressBar.progress = 0
+//
+//        }
+//
+//        pauseButton.setOnClickListener(){
+//                playerBinder.pause()
+//            if(pauseUnpause == 0){
+//                pauseButton.setImageResource(R.drawable.ic_play)
+//            }
+//            if(pauseUnpause == 1){
+//                pauseButton.setImageResource(R.drawable.ic_pause)
+//            }
+//            if(pauseUnpause == 0){
+//                pauseUnpause =1
+//            }else{
+//                pauseUnpause = 0
+//            }
+//
+//
+//        }
 
         searchButton.setOnClickListener(){
 
             var bookSearch: BookSearch = BookSearch()
             bookSearch.show(supportFragmentManager, "bookSearchDialog")
 
-
         }
+
+
+
+        controlFragment = PlayerServiceFragment()
+
+        supportFragmentManager.beginTransaction()
+            .add(R.id.controlFragmentContainer, controlFragment)
+            .commit()
 
         //check if the provided bundle on OnCreate has stored values
         if(savedInstanceState != null){
@@ -83,11 +205,13 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     }
 
+
+
     // when back button pressed, set the current ViewModel book to an empty one
     // if the deivce is in landscape, replace the fragment container 2 with a
     // new BookDetails fragment
     override fun onBackPressed() {
-        viewModel.setBook(Book("","",0,""))
+        viewModel.setBook(Book("","",0,"", 0))
         fragment1 = BookListFragment.newInstance(viewModel.getBookList().value!!)
         fragment2 = BookDetailsFragment()
         if(twopane){
@@ -241,7 +365,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
             var obj= jsonArr.getJSONObject(i)
             //counter = counter +1
             var book = Book(obj.getString("title"), obj.getString("author")
-                ,obj.getInt("id"), obj.getString("cover_url"))
+                ,obj.getInt("id"), obj.getString("cover_url"), obj.getInt("duration"))
             bookList?.add(book)
             viewModel.setBookList(bookList)
             booksAdded()
@@ -259,6 +383,10 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     }
 
+    fun progressChanged(){
+
+    }
+
     // save the term and the current BookList to be reused on Config changes
     override fun onSaveInstanceState(outState: Bundle) {
         outState?.run{
@@ -267,5 +395,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         }
         super.onSaveInstanceState(outState)
     }
+
+
+
+
 
 }

@@ -3,6 +3,7 @@ package edu.temple.audiobb
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import edu.temple.audlibplayer.PlayerService
 import java.io.Serializable
 
 class SharedViewModel: ViewModel() {
@@ -24,6 +25,7 @@ class SharedViewModel: ViewModel() {
     private val book:MutableLiveData<Book> by lazy{
         MutableLiveData()
     }
+
 
    // provide getter and setter functions
     fun setBook(_book:Book?){
