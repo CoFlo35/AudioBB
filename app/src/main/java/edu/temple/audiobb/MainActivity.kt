@@ -168,7 +168,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         controlFragment = PlayerServiceFragment()
 
         supportFragmentManager.beginTransaction()
-            .replace(R.id.controlFragmentContainer, controlFragment)
+            .replace(R.id.controlFragmentContainer, PlayerServiceFragment())
             .commit()
 
         //check if the provided bundle on OnCreate has stored values
@@ -224,10 +224,12 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     }
 
-    override fun updateControls() {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.controlFragmentContainer, PlayerServiceFragment())
-            .commit()
+    override fun updateDisplay() {
+        if(!twopane) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainerView, BookListFragment())
+                .commit()
+        }
     }
 
     override fun pauseClicked() {
@@ -419,6 +421,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     override fun applySearch(searchTerm: String) {
         term = searchTerm
         getData(term)
+        viewModel.setBook(Book("","",0,"",0))
         Log.d("retrieveTerm", "Searched Term is: "+term)
 
     }

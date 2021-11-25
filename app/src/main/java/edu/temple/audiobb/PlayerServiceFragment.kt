@@ -77,8 +77,9 @@ class PlayerServiceFragment : Fragment() {
             var currentBook = viewModel.getBook().value
             if(currentBook?.title != "" && currentBook?.title != null) {
                 nowPlayingTextView.text = "Now Playing: " + currentBook?.title.toString()
-                //playButton.removeSelf()
-                playButton.visibility = View.INVISIBLE
+                playButton.removeSelf()
+
+                //playButton.visibility = View.INVISIBLE
                 (activity as ControlService).playClicked()
                 }
             else{
@@ -87,10 +88,14 @@ class PlayerServiceFragment : Fragment() {
             }
 
         pauseButton.setOnClickListener(){
-            if(playButton.visibility == View.INVISIBLE) {
+            //Log.d("checkButton", "Play button attached?: " + playButton.isAttachedToWindow)
+            if(!playButton.isAttachedToWindow) {
+                Log.d("checkButton", "checkButton is: " + changeIcon)
                 if (!changeIcon) {
+                    Log.d("checkButton", "pause Icon")
                     pauseButton.setImageResource(R.drawable.ic_pause)
                 } else {
+                    Log.d("checkButton", "Play Icon")
                     pauseButton.setImageResource(R.drawable.ic_play)
                 }
                 changeIcon = !changeIcon
@@ -103,11 +108,13 @@ class PlayerServiceFragment : Fragment() {
         stopButton.setOnClickListener(){
             progressBar.progress = 0
             nowPlayingTextView.text = ""
-            //playButton.addTo(layout.findViewById(R.id.controlContainer))
-            playButton.visibility = View.VISIBLE
+            playButton.addTo(layout.findViewById(R.id.controlContainer))
+            //Log.d("checkButton", "Play button attached?: " + playButton.isAttachedToWindow)
+            //playButton.visibility = View.VISIBLE
             pauseButton.setImageResource(R.drawable.ic_pause)
-            changeIcon = false
+            changeIcon = true
             (activity as ControlService).stopClicked()
+            (activity as ControlService).updateDisplay()
 
         }
 
@@ -156,7 +163,7 @@ class PlayerServiceFragment : Fragment() {
         fun playClicked()
         fun pauseClicked()
         fun stopClicked()
-        fun updateControls()
+        fun updateDisplay()
         fun seekBarMoved(progress:Int)
         fun isPlaying():Boolean
 
