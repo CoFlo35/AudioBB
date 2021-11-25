@@ -23,7 +23,7 @@ import org.json.JSONException
 
 //THIS IS THE WEB API BRANCH
 
-class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookSearch.BookSeachListener {
+class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookSearch.BookSeachListener, PlayerServiceFragment.ControlService {
     //initialize references to all views and objects
     private lateinit var fragment1:BookListFragment
     private lateinit var fragment2:BookDetailsFragment
@@ -116,20 +116,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
         supportActionBar?.title = "Book Search Database"
 
-        fun POC_Calback(){
-            //progressBar.progress = 0
-            if (isConnected) {
-                var book = viewModel.getBook().value
-                if (book?.title != "" && book?.title != null) {
-                    playerBinder.play(book!!.id)
-                    Log.d("playButton", "Playing Book # ${book.id}")
-                    Log.d("playBook", "Book Title: ${book.title}")
-                    //playButton.visibility = View.GONE
-                    playerBinder.setProgressHandler(playerHandler)
 
-                }
-            }
-        }
 
 //            }else{
 //                Log.d("playButton", "Disconnected")
@@ -153,7 +140,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 //        }
 //
 //        pauseButton.setOnClickListener(){
-//                playerBinder.pause()
+//
 //            if(pauseUnpause == 0){
 //                pauseButton.setImageResource(R.drawable.ic_play)
 //            }
@@ -181,7 +168,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         controlFragment = PlayerServiceFragment()
 
         supportFragmentManager.beginTransaction()
-            .add(R.id.controlFragmentContainer, controlFragment)
+            .replace(R.id.controlFragmentContainer, controlFragment)
             .commit()
 
         //check if the provided bundle on OnCreate has stored values
@@ -205,6 +192,55 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     }
 
+    override fun isPlaying(): Boolean {
+        return playerBinder.isPlaying
+    }
+
+    override fun seekBarMoved(progress:Int) {
+        var book = viewModel.getBook().value
+                  if(book?.title != "" && book?.title != null) {
+
+                      var dur = book?.duration
+
+                      var percent = progress.toFloat().div(100)
+                      Log.d("progress", percent.toString())
+                      playerBinder.seekTo(dur?.toFloat()?.times(percent)!!.toInt())
+                  }
+
+    }
+
+    override fun playClicked() {
+        if (isConnected) {
+            var book = viewModel.getBook().value
+            if (book?.title != "" && book?.title != null) {
+                playerBinder.play(book!!.id)
+                Log.d("playButton", "Playing Book # ${book.id}")
+                Log.d("playBook", "Book Title: ${book.title}")
+                //playButton.visibility = View.GONE
+                playerBinder.setProgressHandler(playerHandler)
+
+            }
+        }
+
+    }
+
+    override fun updateControls() {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.controlFragmentContainer, PlayerServiceFragment())
+            .commit()
+    }
+
+    override fun pauseClicked() {
+        playerBinder.pause()
+    }
+
+    override fun stopClicked() {
+        unbindService(serviceConnection)
+        bindService(Intent(this,PlayerService::class.java)
+            ,serviceConnection
+            , BIND_AUTO_CREATE)
+
+    }
 
 
     // when back button pressed, set the current ViewModel book to an empty one
@@ -355,6 +391,10 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     }
 
+
+
+
+
     //take an Array of JSON objects and convert them all to book objects
     //add all book objects to the new empty BookList and add the BookList to the
     //ViewModel
@@ -383,9 +423,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     }
 
-    fun progressChanged(){
 
-    }
 
     // save the term and the current BookList to be reused on Config changes
     override fun onSaveInstanceState(outState: Bundle) {
@@ -395,6 +433,8 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         }
         super.onSaveInstanceState(outState)
     }
+
+//
 
 
 

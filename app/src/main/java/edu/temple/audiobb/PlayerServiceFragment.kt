@@ -1,6 +1,7 @@
 package edu.temple.audiobb
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +10,7 @@ import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
+
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -22,12 +24,13 @@ private const val ARG_PARAM2 = "param2"
  */
 lateinit var POC:Any
 class PlayerServiceFragment : Fragment() {
-    lateinit var viewModel: SharedViewModel
-    lateinit var playButton: ImageButton
-    lateinit var pauseButton: ImageButton
-    lateinit var stopButton: ImageButton
-    lateinit var progressBar: SeekBar
-    lateinit var nowPlayingTextView:TextView
+    private lateinit var viewModel: SharedViewModel
+    private lateinit var playButton: ImageButton
+    private lateinit var pauseButton: ImageButton
+    private lateinit var stopButton: ImageButton
+    private lateinit var progressBar: SeekBar
+    private lateinit var nowPlayingTextView:TextView
+    private var changeIcon = true
 
 
 
@@ -52,19 +55,80 @@ class PlayerServiceFragment : Fragment() {
         progressBar = layout.findViewById(R.id.progressBar)
         nowPlayingTextView = layout.findViewById(R.id.nowPlayingTextView)
 
-        nowPlayingTextView.text = "Now Playing: "
+
+        progressBar.setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
+            override fun onProgressChanged(name: SeekBar?, positon: Int, p2: Boolean) {
+                var progress = progressBarNumber(progressBar)
+                (activity as ControlService).seekBarMoved(progress)
+            }
+
+            override fun onStartTrackingTouch(p0: SeekBar?) {
+                //do nothing
+            }
+
+            override fun onStopTrackingTouch(p0: SeekBar?) {
+                //do nothing
+            }
+        })
 
         playButton.setOnClickListener(){
-            POC
 
+            //(activity as ControlService).updateControls()
+            var currentBook = viewModel.getBook().value
+            if(currentBook?.title != "" && currentBook?.title != null) {
+                nowPlayingTextView.text = "Now Playing: " + currentBook?.title.toString()
+                //playButton.removeSelf()
+                playButton.visibility = View.INVISIBLE
+                (activity as ControlService).playClicked()
+                }
+            else{
+                nowPlayingTextView.text = "No Book Selected"
+            }
+            }
+
+        pauseButton.setOnClickListener(){
+            if(playButton.visibility == View.INVISIBLE) {
+                if (!changeIcon) {
+                    pauseButton.setImageResource(R.drawable.ic_pause)
+                } else {
+                    pauseButton.setImageResource(R.drawable.ic_play)
+                }
+                changeIcon = !changeIcon
+                (activity as ControlService).pauseClicked()
             }
 
 
+        }
 
+        stopButton.setOnClickListener(){
+            progressBar.progress = 0
+            nowPlayingTextView.text = ""
+            //playButton.addTo(layout.findViewById(R.id.controlContainer))
+            playButton.visibility = View.VISIBLE
+            pauseButton.setImageResource(R.drawable.ic_pause)
+            changeIcon = false
+            (activity as ControlService).stopClicked()
+
+        }
 
 
         return layout
     }
+
+    fun View?.removeSelf() {
+        this ?: return
+        val parent = parent as? ViewGroup ?: return
+        parent.removeView(this)
+    }
+
+    fun View?.addTo(parent: ViewGroup?) {
+        this ?: return
+        parent ?: return
+        parent.addView(this)
+    }
+
+
+
 
     companion object {
         /**
@@ -81,6 +145,20 @@ class PlayerServiceFragment : Fragment() {
             PlayerServiceFragment.apply { POC = lmbd }
 
         }
+
+        fun progressBarNumber(progressBar:SeekBar):Int{
+            return progressBar.progress.toInt()
+        }
+
+    }
+
+    interface ControlService{
+        fun playClicked()
+        fun pauseClicked()
+        fun stopClicked()
+        fun updateControls()
+        fun seekBarMoved(progress:Int)
+        fun isPlaying():Boolean
 
     }
 
