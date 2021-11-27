@@ -174,7 +174,7 @@ class PlayerServiceFragment : Fragment() {
         }
 
         fun changeNowPlayingText(_text:String){
-            PlayerServiceFragment.apply {text = _text  }
+            PlayerServiceFragment.apply { nowPlayingTextView.text = _text }
         }
 
         fun getNowPlayingText():String{

@@ -73,6 +73,43 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
             Log.d("inspect", service.toString())
             playerBinder = service as PlayerService.MediaControlBinder
             playerBinder.setProgressHandler(playerHandler)
+
+            if(file.exists()){
+                isPlaying =true
+                Log.d("In/Out", "File Exists")
+                try {
+                    val br = BufferedReader(FileReader(file))
+                    val text = StringBuilder()
+                    var line: String?
+                    while (br.readLine().also { line = it } != null) {
+                        text.append(line)
+                    }
+                    br.close()
+
+                    restartWithTitle = text.toString()
+                    PlayerServiceFragment.changeNowPlayingText(text.toString())
+
+//                    PlayerServiceFragment.newInstance(text.toString())
+//                    var actualTitle = text.toString().drop(13)
+//                    var index = bookList?.getIndexByTitle(actualTitle!!)
+//                    Log.d("indexing", bookList!!.print())
+//                    //Log.d("indexing",  bookList!!.getIndexByTitle("Oliver Twist").toString())
+//                    Log.d("indexing", index.toString())
+//
+//                    if(index != -1){
+//                        Log.d("indexing", index.toString())
+//                        var book = bookList?.get(index!!)
+//                        playerBinder.play(book!!.id)
+//                        PlayerServiceFragment.audioPlaying(true)
+//                    }
+
+                }catch (e:IOException){
+                    e.printStackTrace()
+                    Log.d("In/Out", "reading excpetion")
+                }
+                checkFile()
+            }
+
         }
 
         override fun onServiceDisconnected(p0: ComponentName?) {
@@ -105,11 +142,12 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         viewModel = ViewModelProvider(this!!).get(SharedViewModel::class.java)
 
 
-        bindService(Intent(this,PlayerService::class.java)
-            ,serviceConnection
-            , BIND_AUTO_CREATE)
+
 
         Thread.sleep(2000)
+
+
+
 
 
 //          progressBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
@@ -204,14 +242,19 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
                 //grab the term and bookList from the bundle
                 term = savedInstanceState.getString("term").toString()
-               // bookList = getSerializable("bookList") as BookList
-                fragment1 = savedInstanceState.getSerializable("listFrag") as BookListFragment
+                bookList = getSerializable("bookList") as BookList
+                fragment1 = BookListFragment.newInstance(bookList!!)
                 isPlaying = savedInstanceState.getBoolean("isPlaying")
+                if(savedInstanceState.getString("restartTitle").toString() != null){
+                    var restartTitle = savedInstanceState.getString("restartTitle")
+                    PlayerServiceFragment.changeNowPlayingText(restartTitle.toString())
+                }
                 if (isPlaying){
                     Log.d("isPlaying", "is a book playing?: " + isPlaying.toString())
 
                 }
                 PlayerServiceFragment.audioPlaying(isPlaying)
+
                                 //create the BookList fragment with the same bookList that was stored from previous
                 //lifecycle, add it to its designated container
                 //fragment1 = BookListFragment.newInstance(bookList!!)
@@ -225,34 +268,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
 
 
-        if(file.exists()){
-            Log.d("In/Out", "File Exists")
-            try {
-                val br = BufferedReader(FileReader(file))
-                val text = StringBuilder()
-                var line: String?
-                while (br.readLine().also { line = it } != null) {
-                    text.append(line)
-                }
-                br.close()
 
-                PlayerServiceFragment.newInstance(text.toString())
-                restartWithTitle = text.toString()
-                var index = bookList?.getIndexByTitle(restartWithTitle!!)
-                Log.d("indexing", bookList!!.print())
-                Log.d("indexing",  bookList!!.getIndexByTitle("Oliver Twist").toString())
-                Log.d("indexing", index.toString())
-                if(index != -1){
-                    Log.d("indexing", index.toString())
-                    var book = bookList?.get(index!!)
-                    playerBinder.play(book!!.id)
-                }
-
-            }catch (e:IOException){
-                e.printStackTrace()
-                Log.d("In/Out", "reading excpetion")
-            }
-        }
 
     }
 
@@ -274,6 +290,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     }
 
     override fun playClicked() {
+
         if (isConnected) {
             var book = viewModel.getBook().value
             if (book?.title != "" && book?.title != null) {
@@ -381,6 +398,10 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
                         if(bookList!!.size() != null || bookList!!.size() != 0){
                             bookList = BookList()
                         }
+                        bindService(Intent(this,PlayerService::class.java)
+                            ,serviceConnection
+                            , BIND_AUTO_CREATE)
+
                         addBooks(it)
                     } catch (e : JSONException) {
                         e.printStackTrace()
@@ -438,7 +459,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
             .replace(R.id.controlFragmentContainer, controlFragment)
             .commit()
 
-        PlayerServiceFragment.audioPlaying(isPlaying)
+        //PlayerServiceFragment.audioPlaying(isPlaying)
 
         //If there are two fragment containers and there is a book chosen, display the selected
         //book in the second container on the layout
@@ -472,21 +493,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
             }
         }
 
-        if(!playerBinder.isPlaying && restartWithTitle != null){
-            Log.d("onCreateLayout", "Booklist size is: " + bookList!!.size().toString())
 
-            var actualTitle = restartWithTitle?.drop(13)
-            Log.d("onCreateLayout", "Start Title: " + actualTitle)
-            var n = bookList!!.getIndexByTitle(actualTitle!!)
-            if(n != -1){
-                playerBinder.play(n+1)
-            }
-            Log.d("onCreateLayout", "The index is " + n.toString())
-            PlayerServiceFragment.restartUpdateControls()
-            //var n = bookList!!.getIndexByTitle(restartWithTitle)
-        }else{
-
-        }
 
 
 
@@ -544,21 +551,47 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
         }
         Log.d("storeList", storeBookList.print())
+
         if(storeBookList != null) {
             outState?.run {
                 putString("term", term)
-                //putSerializable("bookList", storeBookList)
+                putSerializable("bookList", storeBookList)
                 putBoolean("isPlaying", playerBinder.isPlaying)
-                putSerializable("listFrag", BookListFragment())
+                var actualTitle = restartWithTitle.toString().drop(13)
+                putString("restartTitle", actualTitle)
+
+                //putSerializable("listFrag", BookListFragment())
             }
         }
         super.onSaveInstanceState(outState)
+    }
+
+    fun checkFile(){
+
+        if(restartWithTitle != null){
+            Log.d("onCreateLayout", "Booklist size is: " + bookList!!.size().toString())
+
+            var actualTitle = restartWithTitle?.toString()!!.drop(13)
+            Log.d("onCreateLayout", "Start Title: " + actualTitle)
+            var n = bookList!!.getIndexByTitle(actualTitle!!)
+            if(n != -1){
+                playerBinder.play(n+1)
+                PlayerServiceFragment.restartUpdateControls()
+            }
+            //PlayerServiceFragment.changeNowPlayingText(actualTitle)
+            Log.d("onCreateLayout", "The index is " + n.toString())
+           // PlayerServiceFragment.restartUpdateControls()
+            //var n = bookList!!.getIndexByTitle(restartWithTitle)
+        }else{
+
+        }
     }
 
 //
 
     override fun onDestroy() {
         super.onDestroy()
+        unbindService(serviceConnection)
         if(!autoSave){
             file.delete()
             Log.d("In/Out", "File Deleted")
