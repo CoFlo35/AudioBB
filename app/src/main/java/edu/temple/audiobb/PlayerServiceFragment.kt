@@ -23,13 +23,18 @@ private const val ARG_PARAM2 = "param2"
  * create an instance of this fragment.
  */
 lateinit var POC:Any
+private lateinit var layout:View
+private var text:String? = null
+private lateinit var nowPlayingTextView:TextView
+private lateinit var playButton: ImageButton
+private var isPlaying = false
 class PlayerServiceFragment : Fragment() {
     private lateinit var viewModel: SharedViewModel
-    private lateinit var playButton: ImageButton
     private lateinit var pauseButton: ImageButton
     private lateinit var stopButton: ImageButton
     private lateinit var progressBar: SeekBar
-    private lateinit var nowPlayingTextView:TextView
+
+
     private var changeIcon = true
 
 
@@ -47,13 +52,23 @@ class PlayerServiceFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        var layout = inflater.inflate(R.layout.fragment_player_service, container, false)
+        layout = inflater.inflate(R.layout.fragment_player_service, container, false)
 
         playButton = layout.findViewById(R.id.startButton)
         pauseButton = layout.findViewById(R.id.pauseButton)
         stopButton = layout.findViewById(R.id.stopButton)
         progressBar = layout.findViewById(R.id.progressBar)
         nowPlayingTextView = layout.findViewById(R.id.nowPlayingTextView)
+
+        if(isPlaying == false) {
+            playButton.visibility = View.VISIBLE
+        }else{
+            playButton.visibility = View.INVISIBLE}
+
+        if(text != null){
+            nowPlayingTextView.text = text
+        }
+
 
 
         progressBar.setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
@@ -77,7 +92,8 @@ class PlayerServiceFragment : Fragment() {
             var currentBook = viewModel.getBook().value
             if(currentBook?.title != "" && currentBook?.title != null) {
                 nowPlayingTextView.text = "Now Playing: " + currentBook?.title.toString()
-                playButton.removeSelf()
+                playButton.visibility = View.INVISIBLE
+                //playButton.removeSelf()
 
                 //playButton.visibility = View.INVISIBLE
                 (activity as ControlService).playClicked()
@@ -89,7 +105,7 @@ class PlayerServiceFragment : Fragment() {
 
         pauseButton.setOnClickListener(){
             //Log.d("checkButton", "Play button attached?: " + playButton.isAttachedToWindow)
-            if(!playButton.isAttachedToWindow) {
+            if(playButton.visibility == View.INVISIBLE) {
                 Log.d("checkButton", "checkButton is: " + changeIcon)
                 if (!changeIcon) {
                     Log.d("checkButton", "pause Icon")
@@ -108,9 +124,9 @@ class PlayerServiceFragment : Fragment() {
         stopButton.setOnClickListener(){
             progressBar.progress = 0
             nowPlayingTextView.text = ""
-            playButton.addTo(layout.findViewById(R.id.controlContainer))
+            //playButton.addTo(layout.findViewById(R.id.controlContainer))
             //Log.d("checkButton", "Play button attached?: " + playButton.isAttachedToWindow)
-            //playButton.visibility = View.VISIBLE
+            playButton.visibility = View.VISIBLE
             pauseButton.setImageResource(R.drawable.ic_pause)
             changeIcon = true
             (activity as ControlService).stopClicked()
@@ -148,13 +164,29 @@ class PlayerServiceFragment : Fragment() {
          */
         // TODO: Rename and change types and number of parameters
         @JvmStatic
-        fun newInstance(lmbd: () -> Any){
-            PlayerServiceFragment.apply { POC = lmbd }
+        fun newInstance(_text:String){
+            PlayerServiceFragment.apply { text = _text }
 
         }
 
         fun progressBarNumber(progressBar:SeekBar):Int{
             return progressBar.progress.toInt()
+        }
+
+        fun changeNowPlayingText(_text:String){
+            PlayerServiceFragment.apply {text = _text  }
+        }
+
+        fun getNowPlayingText():String{
+            return nowPlayingTextView.text.toString()
+        }
+
+        fun restartUpdateControls(){
+            playButton.visibility = View.INVISIBLE
+        }
+
+        fun audioPlaying(playing:Boolean){
+            PlayerServiceFragment.apply { isPlaying = playing }
         }
 
     }

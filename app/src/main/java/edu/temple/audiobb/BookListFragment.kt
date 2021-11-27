@@ -10,9 +10,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.io.Serializable
 
 lateinit var items:BookList
-class BookListFragment : Fragment() {
+class BookListFragment : Fragment(), Serializable {
     //create lateinit references to the views in the layout and the ViewModel
     private lateinit var layout:View
     private lateinit var recyclerView:RecyclerView

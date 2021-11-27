@@ -4,6 +4,7 @@ package edu.temple.audiobb
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -20,8 +21,13 @@ import com.android.volley.toolbox.Volley
 import edu.temple.audlibplayer.PlayerService
 import org.json.JSONArray
 import org.json.JSONException
+import java.io.*
+import java.lang.Exception
+import java.lang.StringBuilder
 
 //THIS IS THE WEB API BRANCH
+
+private const val AUTO_SAVE_KEY = "auto_save"
 
 class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookSearch.BookSeachListener, PlayerServiceFragment.ControlService {
     //initialize references to all views and objects
@@ -35,22 +41,29 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     private lateinit var searchButton:Button
     private var term:String = ""
     private lateinit var storeBookList: BookList
+    private lateinit var preferences: SharedPreferences
+    private val internalFileName ="my_file"
+    private lateinit var file: File
+    private var autoSave = false
 //    private lateinit var playButton:ImageButton
 //    private lateinit var pauseButton:ImageButton
 //    private lateinit var stopButton:ImageButton
 //    private lateinit var progressBar: SeekBar
     private lateinit var controlFragment:PlayerServiceFragment
+    private var restartWithTitle:String? = null
+    private var isPlaying = false
 
     var pauseUnpause = 0
 
     private lateinit var playerBinder: PlayerService.MediaControlBinder
-    private lateinit var playerIBinder:PlayerService.MediaControlBinder
     var isConnected = false
     var elapsedTime = 0
     private var book:Book? = null
 
     var playerHandler = Handler(Looper.getMainLooper()){
-        it.what
+        if(it.obj != null) {
+           // Log.d("MessageCheck", it.what.toString())
+        }
        true
     }
 
@@ -83,9 +96,21 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         //stopButton = findViewById(R.id.stopButton)
         //progressBar = findViewById(R.id.progressBar)
 
+        preferences = getPreferences(MODE_PRIVATE)
+
+        file = File(filesDir, internalFileName)
+
+        autoSave = preferences.getBoolean(AUTO_SAVE_KEY,false)
+
+        viewModel = ViewModelProvider(this!!).get(SharedViewModel::class.java)
+
+
         bindService(Intent(this,PlayerService::class.java)
             ,serviceConnection
             , BIND_AUTO_CREATE)
+
+        Thread.sleep(2000)
+
 
 //          progressBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
 //              override fun onProgressChanged(name: SeekBar?, positon: Int, p2: Boolean) {
@@ -112,9 +137,10 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 //
 
 
-        viewModel = ViewModelProvider(this!!).get(SharedViewModel::class.java)
 
-        supportActionBar?.title = "Book Search Database"
+
+            //supportActionBar?.title = "Book Search Database"
+            supportActionBar?.hide()
 
 
 
@@ -171,17 +197,24 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
             .replace(R.id.controlFragmentContainer, PlayerServiceFragment())
             .commit()
 
+
         //check if the provided bundle on OnCreate has stored values
         if(savedInstanceState != null){
             with(savedInstanceState) {
 
                 //grab the term and bookList from the bundle
                 term = savedInstanceState.getString("term").toString()
-                bookList = getSerializable("bookList") as BookList
+               // bookList = getSerializable("bookList") as BookList
+                fragment1 = savedInstanceState.getSerializable("listFrag") as BookListFragment
+                isPlaying = savedInstanceState.getBoolean("isPlaying")
+                if (isPlaying){
+                    Log.d("isPlaying", "is a book playing?: " + isPlaying.toString())
 
-                //create the BookList fragment with the same bookList that was stored from previous
+                }
+                PlayerServiceFragment.audioPlaying(isPlaying)
+                                //create the BookList fragment with the same bookList that was stored from previous
                 //lifecycle, add it to its designated container
-                fragment1 = BookListFragment.newInstance(bookList!!)
+                //fragment1 = BookListFragment.newInstance(bookList!!)
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.fragmentContainerView,fragment1)
                     .commit()
@@ -189,6 +222,37 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         }
 
         getData(term)
+
+
+
+        if(file.exists()){
+            Log.d("In/Out", "File Exists")
+            try {
+                val br = BufferedReader(FileReader(file))
+                val text = StringBuilder()
+                var line: String?
+                while (br.readLine().also { line = it } != null) {
+                    text.append(line)
+                }
+                br.close()
+
+                PlayerServiceFragment.newInstance(text.toString())
+                restartWithTitle = text.toString()
+                var index = bookList?.getIndexByTitle(restartWithTitle!!)
+                Log.d("indexing", bookList!!.print())
+                Log.d("indexing",  bookList!!.getIndexByTitle("Oliver Twist").toString())
+                Log.d("indexing", index.toString())
+                if(index != -1){
+                    Log.d("indexing", index.toString())
+                    var book = bookList?.get(index!!)
+                    playerBinder.play(book!!.id)
+                }
+
+            }catch (e:IOException){
+                e.printStackTrace()
+                Log.d("In/Out", "reading excpetion")
+            }
+        }
 
     }
 
@@ -215,9 +279,28 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
             if (book?.title != "" && book?.title != null) {
                 playerBinder.play(book!!.id)
                 Log.d("playButton", "Playing Book # ${book.id}")
-                Log.d("playBook", "Book Title: ${book.title}")
+                //Log.d("playBook", "Book Title: ${book.title}")
                 //playButton.visibility = View.GONE
                 playerBinder.setProgressHandler(playerHandler)
+
+
+                val editor = preferences.edit()
+                editor.putBoolean(AUTO_SAVE_KEY,autoSave)
+                editor.apply()
+
+                autoSave = true
+
+                if(autoSave){
+                    try{
+                        val outputStream = FileOutputStream(file)
+                        outputStream.write(PlayerServiceFragment.getNowPlayingText().toString().toByteArray())
+                        outputStream.close()
+                        Log.d("In/Out", "wrote to file")
+                    }catch(e:Exception){
+                        e.printStackTrace()
+                        Log.d("In/Out", "Writing Error")
+                    }
+                }
 
             }
         }
@@ -241,6 +324,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         bindService(Intent(this,PlayerService::class.java)
             ,serviceConnection
             , BIND_AUTO_CREATE)
+        file.delete()
+        Log.d("In/Out", "file deleted")
+        autoSave = false
 
     }
 
@@ -349,7 +435,10 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         //always replace the list fragment with a new list fragment
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainerView, fragmentList)
+            .replace(R.id.controlFragmentContainer, controlFragment)
             .commit()
+
+        PlayerServiceFragment.audioPlaying(isPlaying)
 
         //If there are two fragment containers and there is a book chosen, display the selected
         //book in the second container on the layout
@@ -382,6 +471,25 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
                     Log.d("fillContainer", "Config Change Line 217 did this")
             }
         }
+
+        if(!playerBinder.isPlaying && restartWithTitle != null){
+            Log.d("onCreateLayout", "Booklist size is: " + bookList!!.size().toString())
+
+            var actualTitle = restartWithTitle?.drop(13)
+            Log.d("onCreateLayout", "Start Title: " + actualTitle)
+            var n = bookList!!.getIndexByTitle(actualTitle!!)
+            if(n != -1){
+                playerBinder.play(n+1)
+            }
+            Log.d("onCreateLayout", "The index is " + n.toString())
+            PlayerServiceFragment.restartUpdateControls()
+            //var n = bookList!!.getIndexByTitle(restartWithTitle)
+        }else{
+
+        }
+
+
+
     }
 
     //callback funtion for when the books are added, after retrieving the BookList from the
@@ -389,6 +497,8 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     fun booksAdded(){
         var bookList = viewModel.getBookList().value
         Log.d("trackBooks", bookList!!.print())
+
+
         createLayout(bookList)
 
     }
@@ -430,15 +540,30 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     // save the term and the current BookList to be reused on Config changes
     override fun onSaveInstanceState(outState: Bundle) {
-        outState?.run{
-            putString("term", term)
-            putSerializable("bookList", storeBookList)
+        if(playerBinder.isPlaying){
+
+        }
+        Log.d("storeList", storeBookList.print())
+        if(storeBookList != null) {
+            outState?.run {
+                putString("term", term)
+                //putSerializable("bookList", storeBookList)
+                putBoolean("isPlaying", playerBinder.isPlaying)
+                putSerializable("listFrag", BookListFragment())
+            }
         }
         super.onSaveInstanceState(outState)
     }
 
 //
 
+    override fun onDestroy() {
+        super.onDestroy()
+        if(!autoSave){
+            file.delete()
+            Log.d("In/Out", "File Deleted")
+        }
+    }
 
 
 

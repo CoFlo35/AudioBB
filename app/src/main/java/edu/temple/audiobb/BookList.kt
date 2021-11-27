@@ -1,5 +1,6 @@
 package edu.temple.audiobb
 
+import android.util.Log
 import java.io.Serializable
 
 class BookList : Serializable{
@@ -13,6 +14,20 @@ class BookList : Serializable{
 
     fun remove(book: Book){
         bookList.remove(book)
+    }
+    fun getIndexByTitle(_title:String):Int{
+        for(i in 0 until bookList.size){
+            var book = bookList[i]
+            if(book.title == _title){
+                Log.d("bookList search", "we found a match")
+                return i
+
+            }else{
+                Log.d("bookList search", "${book.title} does not match: ${_title}")
+            }
+        }
+
+        return -1
     }
 
     operator fun get(index: Int) = bookList[index]
