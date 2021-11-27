@@ -87,6 +87,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
                     br.close()
 
                     restartWithTitle = text.toString()
+                    Log.d("restartTitle", restartWithTitle.toString())
                     PlayerServiceFragment.changeNowPlayingText(text.toString())
 
 //                    PlayerServiceFragment.newInstance(text.toString())
@@ -592,9 +593,8 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     override fun onDestroy() {
         super.onDestroy()
         unbindService(serviceConnection)
-        if(!autoSave){
-            file.delete()
-            Log.d("In/Out", "File Deleted")
+        if(this.isFinishing){
+
         }
     }
 
