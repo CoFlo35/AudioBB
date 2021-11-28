@@ -254,12 +254,13 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
                 Log.d("onRestart", "Book Index of: " + n )
                 fragment1 = BookListFragment.newInstance(bookList!!)
                 isPlaying = savedInstanceState.getBoolean("isPlaying")
+                Log.d("orientSwitch", "Rerieved from storage is: "+savedInstanceState.getString("restartTitle").toString())
 
-                if(savedInstanceState.getString("restartTitle").toString() != null){
-                    var restartTitle = savedInstanceState.getString("restartTitle")
-                    Log.d("orientSwitch", restartTitle.toString())
-                    PlayerServiceFragment.changeNowPlayingText(restartTitle.toString())
-                }
+
+                var restartTitle = savedInstanceState.getString("restartTitle")
+
+                PlayerServiceFragment.changeNowPlayingText(restartTitle.toString())
+
                 if (isPlaying){
                     Log.d("isPlaying", "is a book playing?: " + isPlaying.toString())
 
@@ -350,6 +351,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     }
 
     override fun stopClicked() {
+        playerBinder.stop()
         unbindService(serviceConnection)
         bindService(Intent(this,PlayerService::class.java)
             ,serviceConnection
@@ -564,13 +566,14 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
         }
         Log.d("storeList", storeBookList.print())
-
+        restartWithTitle = PlayerServiceFragment.getNowPlayingText().toString()
         if(storeBookList != null) {
             outState?.run {
                 putString("term", term)
                 putSerializable("bookList", storeBookList)
                 putBoolean("isPlaying", playerBinder.isPlaying)
-                var actualTitle = restartWithTitle.toString().drop(13)
+                var actualTitle = restartWithTitle
+                Log.d("orientSwitch", "title in storage is: " + actualTitle)
                 putString("restartTitle", actualTitle)
 
                 //putSerializable("listFrag", BookListFragment())
