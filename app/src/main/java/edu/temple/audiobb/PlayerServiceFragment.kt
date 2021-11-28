@@ -174,6 +174,7 @@ class PlayerServiceFragment : Fragment() {
         }
 
         fun changeNowPlayingText(_text:String){
+            Log.d("orientChange", "Changing TextView to " + _text)
             PlayerServiceFragment.apply { nowPlayingTextView.text = _text }
         }
 

@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
     private lateinit var controlFragment:PlayerServiceFragment
     private var restartWithTitle:String? = null
     private var isPlaying = false
+    private var orientSwitch:Boolean = false
 
     var pauseUnpause = 0
 
@@ -74,7 +75,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
             playerBinder = service as PlayerService.MediaControlBinder
             playerBinder.setProgressHandler(playerHandler)
 
-            if(file.exists()){
+            Log.d("orientSwitch", "The value of orientSwitch is: " + orientSwitch.toString())
+
+            if(file.exists() && orientSwitch == false){
                 isPlaying =true
                 Log.d("In/Out", "File Exists")
                 try {
@@ -86,6 +89,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
                     }
                     br.close()
 
+                    Log.d("onRestart", "Book Played With File")
                     restartWithTitle = text.toString()
                     Log.d("restartTitle", restartWithTitle.toString())
                     PlayerServiceFragment.changeNowPlayingText(text.toString())
@@ -134,6 +138,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         //stopButton = findViewById(R.id.stopButton)
         //progressBar = findViewById(R.id.progressBar)
 
+        orientSwitch = false
         preferences = getPreferences(MODE_PRIVATE)
 
         file = File(filesDir, internalFileName)
@@ -240,14 +245,19 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
         //check if the provided bundle on OnCreate has stored values
         if(savedInstanceState != null){
             with(savedInstanceState) {
-
+                orientSwitch = true
                 //grab the term and bookList from the bundle
                 term = savedInstanceState.getString("term").toString()
                 bookList = getSerializable("bookList") as BookList
+                //Log.d("onRestart", "The BookList is: " + bookList!!.print())
+                var n = bookList!!.getIndexByTitle("Flatland").toString()
+                Log.d("onRestart", "Book Index of: " + n )
                 fragment1 = BookListFragment.newInstance(bookList!!)
                 isPlaying = savedInstanceState.getBoolean("isPlaying")
+
                 if(savedInstanceState.getString("restartTitle").toString() != null){
                     var restartTitle = savedInstanceState.getString("restartTitle")
+                    Log.d("orientSwitch", restartTitle.toString())
                     PlayerServiceFragment.changeNowPlayingText(restartTitle.toString())
                 }
                 if (isPlaying){
@@ -285,7 +295,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
                       var percent = progress.toFloat().div(100)
                       Log.d("progress", percent.toString())
-                      playerBinder.seekTo(dur?.toFloat()?.times(percent)!!.toInt())
+                      if(this::playerBinder.isInitialized) {
+                          playerBinder.seekTo(dur?.toFloat()?.times(percent)!!.toInt())
+                      }
                   }
 
     }
@@ -592,8 +604,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.EventInterface, BookS
 
     override fun onDestroy() {
         super.onDestroy()
-        unbindService(serviceConnection)
+        //unbindService(serviceConnection)
         if(this.isFinishing){
+            orientSwitch = false
 
         }
     }
